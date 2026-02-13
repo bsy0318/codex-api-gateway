@@ -1,4 +1,4 @@
-# ChatGPT Proxy
+# Codex CLI Proxy API
 
 이 봉사기는 로컬에서 Codex CLI를 OpenAI 호환 API처럼 리용하게 하는 중계봉사기입니다.
 외부 측에서도 OpenAI API와 비슷한 방식으로 그대로 련동할수 있습니다.

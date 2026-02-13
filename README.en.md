@@ -1,4 +1,4 @@
-# ChatGPT Proxy
+# Codex CLI Proxy API
 
 This project runs Codex CLI behind an OpenAI-compatible local proxy API.
 It can also be consumed by external clients with nearly the same usage pattern as the real OpenAI API.

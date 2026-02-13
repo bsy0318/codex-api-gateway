@@ -1,4 +1,4 @@
-# ChatGPT Proxy
+# Codex CLI Proxy API
 
 English is the default README.
 

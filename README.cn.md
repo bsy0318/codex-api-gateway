@@ -1,4 +1,4 @@
-# ChatGPT Proxy
+# Codex CLI Proxy API
 
 这是一个本地代理服务，可把 Codex CLI 作为 OpenAI 兼容 API 使用。
 也可以给外部客户端使用，调用方式基本和真实 OpenAI API 一致。

@@ -1,4 +1,4 @@
-# ChatGPT Proxy
+# CCodex CLI Proxy API
 
 로컬에서 Codex CLI를 OpenAI 호환 API처럼 사용할 수 있는 프록시 서버입니다.
 외부 클라이언트에서도 OpenAI API와 유사한 방식으로 그대로 연동할 수 있습니다.
