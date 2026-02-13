@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChatGPT Proxy</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root {
+  --sans: 'Pretendard Variable', 'Pretendard', -apple-system, 'Hiragino Sans', 'Noto Sans CJK', sans-serif;
+  --mono: 'SF Mono', 'Cascadia Code', 'Fira Code', Consolas, monospace;
+  --white: #ffffff;
+  --g50: #fafafa;
+  --g100: #f4f4f5;
+  --g200: #e4e4e7;
+  --g300: #d4d4d8;
+  --g400: #a1a1aa;
+  --g500: #71717a;
+  --g600: #52525b;
+  --g700: #3f3f46;
+  --g900: #18181b;
+  --signal: #dc2626;
+  --signal-soft: #fef2f2;
+  --signal-hover: #b91c1c;
+  --ok: #16a34a;
+  --ok-soft: #f0fdf4;
+  --r-s: 6px;
+  --r-m: 10px;
+  --r-l: 14px;
+  --sh-s: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --sh-m: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --sh-focus: 0 0 0 2px var(--signal-soft), 0 0 0 4px var(--signal);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { font-size: 15px; -webkit-font-smoothing: antialiased; }
+body {
+  font-family: var(--sans);
+  background: var(--g50);
+  color: var(--g900);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+::selection { background: var(--signal); color: var(--white); }
+
+.app { max-width: 760px; margin: 0 auto; padding: 44px 20px 72px; }
+
+.hdr { margin-bottom: 26px; }
+.hdr-row { display: flex; align-items: center; gap: 12px; }
+.logo { font-size: 1.18rem; font-weight: 700; letter-spacing: -0.03em; }
+.logo span { color: var(--signal); }
+.lang-sw { margin-left: auto; display: flex; gap: 4px; flex-wrap: wrap; }
+.lang-btn {
+  padding: 4px 8px;
+  font-size: 0.67rem;
+  font-family: var(--sans);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--g400);
+  cursor: pointer;
+}
+.lang-btn.on { color: var(--g900); border-color: var(--g200); background: var(--white); }
+
+.panel {
+  border: 1px solid var(--g200);
+  background: var(--white);
+  border-radius: var(--r-l);
+  box-shadow: var(--sh-s);
+  padding: 18px;
+}
+
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.field { margin-bottom: 16px; }
+.fl {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--g500);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 7px;
+}
+.hint { font-size: 0.72rem; color: var(--g400); margin-top: 6px; }
+.model-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  min-height: 20px;
+}
+.model-brand img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  border-radius: 4px;
+  background: var(--white);
+}
+.model-brand span { font-size: 0.76rem; color: var(--g500); }
+
+.inp,
+.ta {
+  width: 100%;
+  padding: 10px 12px;
+  font-family: var(--sans);
+  font-size: 0.88rem;
+  color: var(--g900);
+  background: var(--white);
+  border: 1px solid var(--g200);
+  border-radius: var(--r-m);
+  outline: none;
+  box-shadow: var(--sh-s);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.inp:focus,
+.ta:focus { border-color: var(--signal); box-shadow: var(--sh-focus); }
+.ta { resize: vertical; line-height: 1.65; }
+
+.chk-row { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+.chk-row input { accent-color: var(--signal); }
+.chk-row label { font-size: 0.86rem; color: var(--g600); }
+
+.acts { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
+.btn-s {
+  padding: 10px 24px;
+  border: none;
+  border-radius: var(--r-m);
+  background: var(--signal);
+  color: var(--white);
+  font-weight: 600;
+  font-size: 0.86rem;
+  font-family: var(--sans);
+  cursor: pointer;
+  box-shadow: var(--sh-m);
+}
+.btn-s:hover { background: var(--signal-hover); }
+.btn-s:disabled { background: var(--g300); cursor: not-allowed; box-shadow: none; }
+.btn-c {
+  padding: 10px 16px;
+  border: 1px solid var(--g200);
+  border-radius: var(--r-m);
+  background: var(--white);
+  color: var(--g500);
+  font-weight: 500;
+  font-size: 0.82rem;
+  font-family: var(--sans);
+  cursor: pointer;
+}
+
+.res-area { margin-top: 26px; }
+.res-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--g500);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+.res-box {
+  min-height: 180px;
+  max-height: 520px;
+  overflow-y: auto;
+  border: 1px solid var(--g200);
+  border-radius: var(--r-l);
+  padding: 16px 18px;
+  background: var(--white);
+  line-height: 1.72;
+  font-size: 0.88rem;
+  box-shadow: var(--sh-s);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.res-box.live { border-color: var(--ok); box-shadow: 0 0 0 1px #bbf7d0; }
+.res-box:empty::before { content: attr(data-placeholder); color: var(--g300); }
+.res-meta {
+  margin-top: 8px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 0.72rem;
+  color: var(--g400);
+  font-variant-numeric: tabular-nums;
+}
+
+.ftr {
+  margin-top: 34px;
+  border-top: 1px solid var(--g200);
+  padding-top: 16px;
+  font-size: 0.71rem;
+  line-height: 1.85;
+  color: var(--g400);
+}
+.ftr code {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  background: var(--g100);
+  border-radius: 5px;
+  color: var(--g600);
+  padding: 2px 6px;
+}
+
+@media (max-width: 720px) {
+  .row { grid-template-columns: 1fr; }
+  .app { padding-top: 30px; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div class="logo">ChatGPT <span>Proxy</span></div>
+      <div class="lang-sw" id="langSw"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="row">
+      <div class="field">
+        <label class="fl" data-i="host"></label>
+        <input class="inp" id="host" type="text" placeholder="127.0.0.1">
+      </div>
+      <div class="field">
+        <label class="fl" data-i="port"></label>
+        <input class="inp" id="port" type="number" min="1" max="65535" placeholder="8000">
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="fl" data-i="baseUrl"></label>
+      <div class="inp" id="baseUrlView" style="background:var(--g50)"></div>
+      <div class="hint" data-i="baseHint"></div>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label class="fl" data-i="model"></label>
+        <select class="inp" id="model"></select>
+        <div class="model-brand" id="modelBrand">
+          <img id="modelLogo" alt="" style="display:none">
+          <span id="modelProvider"></span>
+        </div>
+      </div>
+      <div class="field">
+        <label class="fl" data-i="streaming"></label>
+        <div class="chk-row">
+          <input type="checkbox" id="stream" checked>
+          <label for="stream" data-i="streamOn"></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="fl"><span data-i="system"></span> <span style="font-weight:400;color:var(--g400)" data-i="optional"></span></label>
+      <textarea class="ta" id="sys" rows="2" data-pi="sysph"></textarea>
+    </div>
+
+    <div class="field">
+      <label class="fl" data-i="message"></label>
+      <textarea class="ta" id="prompt" rows="6" data-pi="msgph"></textarea>
+    </div>
+
+    <div class="acts">
+      <button class="btn-s" id="sendBtn" data-i="send" onclick="send()"></button>
+      <button class="btn-c" data-i="clear" onclick="clr()"></button>
+      <button class="btn-c" data-i="reloadModels" onclick="loadModels()"></button>
+    </div>
+
+    <div class="res-area">
+      <div class="res-label" data-i="response"></div>
+      <div class="res-box" id="res" data-placeholder=""></div>
+      <div class="res-meta" id="meta"></div>
+    </div>
+  </div>
+
+  <div class="ftr">
+    <code>GET /v1/models</code> &nbsp;·&nbsp;
+    <code>POST /v1/chat/completions</code> &nbsp;·&nbsp;
+    <code>POST /v1/responses</code><br>
+    <code>client = OpenAI(base_url="http://127.0.0.1:8000/v1", api_key="not-needed")</code>
+  </div>
+</div>
+
+<script>
+const I = {
+  ko: {
+    host: '호스트', port: '포트', baseUrl: '현재 Base URL', baseHint: '아래 API 호출은 이 주소를 기준으로 실행됩니다',
+    model: '모델', streaming: '스트리밍', streamOn: '스트리밍 활성화',
+    system: '시스템', optional: '— 선택', message: '메시지',
+    sysph: '시스템 프롬프트를 입력하세요', msgph: '무엇이든 물어보세요',
+    send: '전송', clear: '초기화', reloadModels: '모델 새로고침', response: '응답',
+    resph: '응답이 여기에 표시됩니다', busy: '처리 중…', loadingModels: '모델 불러오는 중…',
+    modelLoadFail: '모델을 불러오지 못했습니다', errPrefix: '오류'
+  },
+  kp: {
+    host: '호스트', port: '포구', baseUrl: '현재 Base URL', baseHint: '아래 API 호출은 이 주소를 기준으로 실행됩니다',
+    model: '모형', streaming: '흐름식전송', streamOn: '흐름식전송 사용',
+    system: '체계', optional: '— 임의', message: '글발',
+    sysph: '체계지령을 입력하십시오', msgph: '제기할 물음을 입력하십시오',
+    send: '전송', clear: '소거', reloadModels: '모형 다시읽기', response: '응답',
+    resph: '응답이 이곳에 현시됩니다', busy: '봉사중...', loadingModels: '모형을 읽는중...',
+    modelLoadFail: '모형을 읽지 못하였습니다', errPrefix: '오유'
+  },
+  ja: {
+    host: 'ホスト', port: 'ポート', baseUrl: '現在のBase URL', baseHint: '下のAPI呼び出しはこのURLを基準に実行されます',
+    model: 'モデル', streaming: 'ストリーミング', streamOn: 'ストリーミング有効',
+    system: 'システム', optional: '— 任意', message: 'メッセージ',
+    sysph: 'システムプロンプトを入力', msgph: '何でも聞いてください',
+    send: '送信', clear: 'クリア', reloadModels: 'モデル再読込', response: 'レスポンス',
+    resph: 'レスポンスがここに表示されます', busy: '処理中…', loadingModels: 'モデルを読み込み中…',
+    modelLoadFail: 'モデル取得に失敗しました', errPrefix: 'エラー'
+  },
+  zh: {
+    host: '主机', port: '端口', baseUrl: '当前 Base URL', baseHint: '下面的 API 调用将基于这个地址执行',
+    model: '模型', streaming: '流式传输', streamOn: '启用流式输出',
+    system: '系统', optional: '— 可选', message: '消息',
+    sysph: '输入系统提示词', msgph: '随便问点什么',
+    send: '发送', clear: '清除', reloadModels: '刷新模型', response: '响应',
+    resph: '响应将在此显示', busy: '处理中…', loadingModels: '正在加载模型…',
+    modelLoadFail: '模型加载失败', errPrefix: '错误'
+  },
+  en: {
+    host: 'Host', port: 'Port', baseUrl: 'Current Base URL', baseHint: 'API calls below use this address',
+    model: 'Model', streaming: 'Streaming', streamOn: 'Enable streaming',
+    system: 'System', optional: '— optional', message: 'Message',
+    sysph: 'Enter system prompt', msgph: 'Ask anything',
+    send: 'Send', clear: 'Clear', reloadModels: 'Reload models', response: 'Response',
+    resph: 'Response will appear here', busy: 'Processing…', loadingModels: 'Loading models…',
+    modelLoadFail: 'Failed to load models', errPrefix: 'Error'
+  }
+};
+
+const LANG_LABELS = { ko: 'KR', kp: 'KP', ja: 'JP', zh: 'CN', en: 'EN' };
+
+let lang = detectLang();
+let busy = false;
+const modelProviderMap = new Map();
+const providerNameMap = new Map();
+
+function detectLang() {
+  const saved = localStorage.getItem('lang');
+  if (saved && I[saved]) return saved;
+  const nav = (navigator.language || '').toLowerCase();
+  if (nav.startsWith('ko')) return 'ko';
+  if (nav.startsWith('ja')) return 'ja';
+  if (nav.startsWith('zh')) return 'zh';
+  return 'en';
+}
+
+function setLang(l) {
+  lang = l;
+  localStorage.setItem('lang', l);
+  applyI18n();
+  renderLangSw();
+}
+
+function applyI18n() {
+  const t = I[lang];
+  document.documentElement.lang = lang === 'kp' ? 'ko' : lang === 'zh' ? 'zh-CN' : lang;
+  document.querySelectorAll('[data-i]').forEach(el => {
+    const k = el.dataset.i;
+    if (t[k]) el.textContent = t[k];
+  });
+  document.querySelectorAll('[data-pi]').forEach(el => {
+    const k = el.dataset.pi;
+    if (t[k]) el.placeholder = t[k];
+  });
+  const rb = document.getElementById('res');
+  if (rb) rb.dataset.placeholder = t.resph;
+}
+
+function renderLangSw() {
+  const sw = document.getElementById('langSw');
+  sw.innerHTML = Object.keys(I).map(l =>
+    `<button class="lang-btn${l===lang?' on':''}" onclick="setLang('${l}')">${LANG_LABELS[l]}</button>`
+  ).join('');
+}
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = String(s || '');
+  return d.innerHTML;
+}
+
+function baseUrl() {
+  const host = (document.getElementById('host')?.value || '127.0.0.1').trim();
+  const port = (document.getElementById('port')?.value || '8000').trim();
+  return `http://${host}:${port}`;
+}
+
+function updateBaseUrlView() {
+  const view = document.getElementById('baseUrlView');
+  if (view) view.textContent = baseUrl();
+}
+
+function api(path) {
+  return baseUrl().replace(/\/$/, '') + path;
+}
+
+function saveConn() {
+  localStorage.setItem('proxy_host', document.getElementById('host')?.value || '');
+  localStorage.setItem('proxy_port', document.getElementById('port')?.value || '');
+  updateBaseUrlView();
+}
+
+function initConn() {
+  const defaultHost = location.hostname || '127.0.0.1';
+  const defaultPort = location.port || '8000';
+  const host = localStorage.getItem('proxy_host') || defaultHost;
+  const port = localStorage.getItem('proxy_port') || defaultPort;
+  const hostEl = document.getElementById('host');
+  const portEl = document.getElementById('port');
+  if (hostEl) hostEl.value = host;
+  if (portEl) portEl.value = port;
+  hostEl?.addEventListener('input', saveConn);
+  portEl?.addEventListener('input', saveConn);
+  updateBaseUrlView();
+}
+
+function clr() {
+  const p = document.getElementById('prompt');
+  const s = document.getElementById('sys');
+  if (p) p.value = '';
+  if (s) s.value = '';
+}
+
+function setBusy(v) {
+  busy = v;
+  const t = I[lang];
+  const btn = document.getElementById('sendBtn');
+  if (!btn) return;
+  btn.disabled = v;
+  btn.textContent = v ? t.busy : t.send;
+}
+
+function renderMeta(usage, ms) {
+  const meta = document.getElementById('meta');
+  if (!meta) return;
+  const parts = [];
+  if (usage && Number.isFinite(usage.prompt_tokens)) parts.push(`${usage.prompt_tokens} prompt`);
+  if (usage && Number.isFinite(usage.completion_tokens)) parts.push(`${usage.completion_tokens} completion`);
+  if (usage && Number.isFinite(usage.input_tokens)) parts.push(`${usage.input_tokens} input`);
+  if (usage && Number.isFinite(usage.output_tokens)) parts.push(`${usage.output_tokens} output`);
+  if (Number.isFinite(ms)) parts.push(`${(ms / 1000).toFixed(2)}s`);
+  meta.innerHTML = parts.map(x => `<span>${esc(x)}</span>`).join('');
+}
+
+function updateModelBrand() {
+  const modelId = document.getElementById('model')?.value || '';
+  const providerId = modelProviderMap.get(modelId) || '';
+  const providerName = providerNameMap.get(providerId) || providerId;
+  const logo = document.getElementById('modelLogo');
+  const label = document.getElementById('modelProvider');
+  if (!logo || !label) return;
+
+  if (!providerId) {
+    logo.style.display = 'none';
+    logo.removeAttribute('src');
+    label.textContent = '';
+    return;
+  }
+
+  logo.style.display = 'block';
+  logo.src = `https://models.dev/logos/${providerId}.svg`;
+  logo.alt = providerName;
+  logo.onerror = () => {
+    logo.style.display = 'none';
+  };
+  label.textContent = providerName;
+}
+
+async function loadModels() {
+  const t = I[lang];
+  const sel = document.getElementById('model');
+  if (!sel) return;
+  sel.innerHTML = `<option>${t.loadingModels}</option>`;
+  modelProviderMap.clear();
+  providerNameMap.clear();
+  try {
+    const r = await fetch(api('/v1/models'));
+    const data = await r.json();
+    const models = Array.isArray(data.data) ? data.data : [];
+    if (!models.length) throw new Error('empty model list');
+
+    const seen = new Set();
+    const items = [];
+    for (const m of models) {
+      const id = String(m?.id || '').trim();
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      const provider = String(m?.owned_by || '').trim();
+      if (provider) {
+        modelProviderMap.set(id, provider);
+        providerNameMap.set(provider, provider);
+      }
+      items.push(id);
+    }
+
+    sel.innerHTML = items.map(id => `<option value="${esc(id)}">${esc(id)}</option>`).join('');
+    updateModelBrand();
+  } catch {
+    sel.innerHTML = `<option>${t.modelLoadFail}</option>`;
+    updateModelBrand();
+  }
+}
+
+async function send() {
+  if (busy) return;
+  const t = I[lang];
+  const promptEl = document.getElementById('prompt');
+  const resEl = document.getElementById('res');
+  const metaEl = document.getElementById('meta');
+  const model = document.getElementById('model')?.value || 'gpt-5.3-codex';
+  const sys = document.getElementById('sys')?.value.trim() || '';
+  const prompt = promptEl?.value.trim() || '';
+  const stream = !!document.getElementById('stream')?.checked;
+  if (!prompt || !resEl || !metaEl) return;
+
+  const messages = [];
+  if (sys) messages.push({ role: 'system', content: sys });
+  messages.push({ role: 'user', content: prompt });
+
+  resEl.textContent = '';
+  metaEl.innerHTML = '';
+  const started = performance.now();
+  setBusy(true);
+
+  try {
+    if (stream) {
+      resEl.classList.add('live');
+      const r = await fetch(api('/v1/chat/completions'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model, stream: true, messages })
+      });
+      if (!r.ok || !r.body) {
+        const errTxt = await r.text();
+        throw new Error(errTxt || `${r.status}`);
+      }
+
+      const reader = r.body.getReader();
+      const dec = new TextDecoder();
+      let buf = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        const chunks = buf.split('\n\n');
+        buf = chunks.pop() || '';
+
+        for (const block of chunks) {
+          const lines = block.split('\n').map(x => x.trim()).filter(Boolean);
+          for (const line of lines) {
+            if (!line.startsWith('data:')) continue;
+            const data = line.slice(5).trim();
+            if (data === '[DONE]') continue;
+            let parsed;
+            try { parsed = JSON.parse(data); } catch { continue; }
+            const delta = parsed?.choices?.[0]?.delta?.content;
+            if (delta) {
+              resEl.textContent += delta;
+              resEl.scrollTop = resEl.scrollHeight;
+            }
+          }
+        }
+      }
+      resEl.classList.remove('live');
+      renderMeta(null, performance.now() - started);
+      return;
+    }
+
+    const r = await fetch(api('/v1/chat/completions'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model, stream: false, messages })
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || r.statusText || 'request failed');
+    const text = data?.choices?.[0]?.message?.content || '';
+    resEl.textContent = text;
+    renderMeta(data.usage || null, performance.now() - started);
+  } catch (e) {
+    resEl.classList.remove('live');
+    resEl.textContent = `${t.errPrefix}: ${e.message || String(e)}`;
+  } finally {
+    setBusy(false);
+  }
+}
+
+function init() {
+  applyI18n();
+  renderLangSw();
+  initConn();
+  loadModels();
+  const modelSel = document.getElementById('model');
+  modelSel?.addEventListener('change', updateModelBrand);
+  const p = document.getElementById('prompt');
+  if (p) p.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) send();
+  });
+}
+
+init();
+</script>
+
+</body>
+</html>
