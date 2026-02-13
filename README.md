@@ -1,16 +1,70 @@
 # ChatGPT Proxy
 
-Language-specific README files:
+English is the default README.
 
-- KR: `README.kr.md`
-- KP: `README.kp.md`
-- JP: `README.jp.md`
-- CN: `README.cn.md`
-- EN: `README.en.md`
+Language shortcuts: [EN](README.md) | [KR](README.kr.md) | [KP](README.kp.md) | [JP](README.jp.md) | [CN](README.cn.md)
 
-Environment variables are loaded from `.env` automatically.
-Start by copying `.env.example` to `.env`.
+This project runs Codex CLI behind an OpenAI-compatible local proxy API.
+It can also be consumed by external clients with nearly the same usage pattern as the real OpenAI API.
 
-Each language README also includes a legal disclaimer section.
+## Endpoints
+- `GET /health`
+- `GET /` (web console)
+- `GET /v1/models`
+- `POST /v1/chat/completions`
+- `POST /v1/responses`
 
-License: MIT (`LICENSE`).
+## Setup
+```bash
+codex --version
+codex login
+pip install -r requirements.txt
+copy .env.example .env
+```
+
+## Run
+```bash
+uvicorn server:app --host 127.0.0.1 --port 8000
+```
+
+## Port Configuration
+- Choose port in command:
+```bash
+uvicorn server:app --host 127.0.0.1 --port 8999
+```
+- Or with env var:
+```bash
+set PORT=8999
+python server.py
+```
+
+## External Usage (like a real API)
+- Bind for external access:
+```bash
+uvicorn server:app --host 0.0.0.0 --port 8999
+```
+- Connect from another machine:
+```python
+from openai import OpenAI
+
+client = OpenAI(base_url="http://<SERVER_IP>:8999/v1", api_key="not-needed")
+```
+
+## Environment Variables
+- `CODEX_PROXY_DEFAULT_MODEL`
+- `CODEX_PROXY_MODELS`
+- `CODEX_PROXY_TIMEOUT`
+- `CODEX_PROXY_STREAM_CHUNK_SIZE`
+- `CODEX_PROXY_MODELS_URL`
+- `CODEX_PROXY_MODELS_CACHE_TTL`
+- `HOST`, `PORT`
+
+`.env` is loaded automatically at startup.
+
+## Legal Disclaimer
+- This project is an unofficial community proxy and is not affiliated with, endorsed by, or sponsored by OpenAI, Anthropic, or models.dev.
+- You are solely responsible for how you deploy and use this software, including API policy compliance, data protection, access control, and applicable laws/regulations.
+- The software is provided "as is" without warranties of any kind; use in production is at your own risk.
+
+## License
+MIT (`LICENSE`)
